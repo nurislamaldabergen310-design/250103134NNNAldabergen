@@ -1,20 +1,17 @@
-
 public class Main {
-    public static void main(String[] args) throws InterruptedException {
-        LegacyStockFeed legacyFeed = new LegacyStockFeed();
-        StockProvider adapter = new StockFeedAdapter(legacyFeed);
-        StockProvider proxy = new CachedStockProxy(adapter, 1500);
-
-        System.out.println(">>> 1. Initial Request (Cold Cache) <<<");
-        System.out.printf("AAPL Price: $%.2f%n", proxy.getMarketPrice("AAPL"));
-
-        System.out.println("\n>>> 2. Immediate Repeat Request (Hot Cache) <<<");
-        System.out.printf("AAPL Price: $%.2f%n", proxy.getMarketPrice("AAPL"));
-
-        System.out.println("\n>>> 3. Sleeping 1600ms to invalidate cache... <<<");
-        Thread.sleep(1600);
-
-        System.out.println(">>> 4. Subsequent Request (Expired Cache) <<<");
-        System.out.printf("AAPL Price: $%.2f%n", proxy.getMarketPrice("AAPL"));
+    public static void main(String[] args) {
+        MessageChannel email = new EmailChannel();
+        MessageChannel sms = new SmsChannel();
+        DispatchStrategy immediate = new ImmediateStrategy();
+        DispatchStrategy businessHours = new BusinessHoursStrategy();
+        System.out.println(">>> 1. Critical Alert via SMS (Night time: 02:00, Emergency Bypass) <<<");
+        Alert emergency = new CriticalSystemAlert(sms, businessHours);
+        emergency.processAlert("+1555019283", "Database primary node kernel panic", 2);
+        System.out.println("\n>>> 2. Daily Summary via Email at Night (Hour: 23:00 - Should Suppress) <<<");
+        Alert summaryNight = new DailySummaryAlert(email, businessHours);
+        summaryNight.processAlert("dev-team@company.internal", "99.98% uptime achieved today.", 23);
+        System.out.println("\n>>> 3. Daily Summary via Email during Workday (Hour: 11:00 - Should Deliver) <<<");
+        Alert summaryDay = new DailySummaryAlert(email, businessHours);
+        summaryDay.processAlert("dev-team@company.internal", "99.98% uptime achieved today.", 11);
     }
 }
