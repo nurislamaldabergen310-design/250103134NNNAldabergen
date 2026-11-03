@@ -1,16 +1,20 @@
+
 public class Main {
-    public static void main(String[] args) {
-        String[] headers = {"ID", "User", "Role"};
-        String[][] rows = {
-                {"101", "sufyan", "Admin"},
-                {"102", "alex", "Dev"}
-        };
-        ReportFormatter jsonStrategy = new JsonFormatter();
-        String rawJson = jsonStrategy.format("UserAuditReport", headers, rows);
-        System.out.println(">>> TESTING DECORATOR STACK: Base64(HeaderFooter(BaseFileExporter)) <<<");
-        Exporter securePipeline = new Base64EncryptDecorator(
-                new HeaderFooterDecorator(new BaseFileExporter(), "2026-11-02 10:00:00 UTC", rows.length)
-        );
-        securePipeline.export("/var/logs/audit.sec", rawJson);
+    public static void main(String[] args) throws InterruptedException {
+        LegacyStockFeed legacyFeed = new LegacyStockFeed();
+        StockProvider adapter = new StockFeedAdapter(legacyFeed);
+        StockProvider proxy = new CachedStockProxy(adapter, 1500);
+
+        System.out.println(">>> 1. Initial Request (Cold Cache) <<<");
+        System.out.printf("AAPL Price: $%.2f%n", proxy.getMarketPrice("AAPL"));
+
+        System.out.println("\n>>> 2. Immediate Repeat Request (Hot Cache) <<<");
+        System.out.printf("AAPL Price: $%.2f%n", proxy.getMarketPrice("AAPL"));
+
+        System.out.println("\n>>> 3. Sleeping 1600ms to invalidate cache... <<<");
+        Thread.sleep(1600);
+
+        System.out.println(">>> 4. Subsequent Request (Expired Cache) <<<");
+        System.out.printf("AAPL Price: $%.2f%n", proxy.getMarketPrice("AAPL"));
     }
 }
